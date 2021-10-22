@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
-from lemon_markets.helpers.api_client import _ApiClient
 from lemon_markets.account import Account
+from lemon_markets.helpers.api_client import _ApiClient
 from lemon_markets.instrument import Instrument, Instruments
 from lemon_markets.space import Space
 

@@ -2,11 +2,13 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pandas import DataFrame as DataFrame, to_datetime
 from typing import Union
 
-from lemon_markets.helpers.api_client import _ApiClient
+from pandas import DataFrame as DataFrame
+from pandas import to_datetime
+
 from lemon_markets.account import Account
+from lemon_markets.helpers.api_client import _ApiClient
 from lemon_markets.helpers.time_helper import datetime_to_timestamp_seconds
 from lemon_markets.instrument import Instrument
 from lemon_markets.trading_venue import TradingVenue
@@ -73,15 +75,14 @@ class OHLC(_ApiClient):
 
         if not as_df:
             return results
+        from_tz = timezone.utc
+        to_tz = datetime.now().astimezone().tzinfo
+        df = DataFrame(results)
+        df['t'] = to_datetime(df['t'], unit='s').dt.tz_localize(from_tz).dt.tz_convert(to_tz)
+        df.set_index('t', inplace=True)
+        if ordering == '-date':
+            df.sort_index(ascending=False, inplace=True)
         else:
-            from_tz = timezone.utc
-            to_tz = datetime.now().astimezone().tzinfo
-            df = DataFrame(results)
-            df['t'] = to_datetime(df['t'], unit='s').dt.tz_localize(from_tz).dt.tz_convert(to_tz)
-            df.set_index('t', inplace=True)
-            if ordering == '-date':
-                df.sort_index(ascending=False, inplace=True)
-            else:
-                df.sort_index(ascending=True, inplace=True)
+            df.sort_index(ascending=True, inplace=True)
 
-            return df
+        return df

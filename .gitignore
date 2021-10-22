@@ -2,8 +2,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm,windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm,windows
 
-### Testing ###
-test.py
+
+### Unittesting ###
+results.xml.html
+*.xml
 
 ### vscode ###
 .vscode

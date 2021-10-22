@@ -1,12 +1,12 @@
 """Module for managing spaces."""
 
-from lemon_markets.helpers.api_client import _ApiClient
-from lemon_markets.account import Account
-from lemon_markets.helpers.time_helper import current_time
-
-from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
+
+from lemon_markets.account import Account
+from lemon_markets.helpers.api_client import _ApiClient
+from lemon_markets.helpers.time_helper import current_time
 
 
 class SpaceType(Enum):

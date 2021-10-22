@@ -1,12 +1,12 @@
 """Module for working with instruments."""
 
-from lemon_markets.helpers.api_client import _ApiClient
-from lemon_markets.account import Account
-from lemon_markets.trading_venue import TradingVenue
-
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 from typing import List
+
+from lemon_markets.account import Account
+from lemon_markets.helpers.api_client import _ApiClient
+from lemon_markets.trading_venue import TradingVenue
 
 
 class InstrumentType(Enum):

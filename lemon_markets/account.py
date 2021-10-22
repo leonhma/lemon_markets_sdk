@@ -1,13 +1,15 @@
 """The entry point of all your scripts."""
 
-import time
-import requests
 import json
+import time
 
-from lemon_markets.config import DEFAULT_AUTH_API_URL, \
-    DEFAULT_PAPER_REST_API_URL, DEFAULT_PAPER_DATA_REST_API_URL, \
-    DEFAULT_MONEY_REST_API_URL, DEFAULT_MONEY_DATA_REST_API_URL
+import requests
 
+from lemon_markets.config import (DEFAULT_AUTH_API_URL,
+                                  DEFAULT_MONEY_DATA_REST_API_URL,
+                                  DEFAULT_MONEY_REST_API_URL,
+                                  DEFAULT_PAPER_DATA_REST_API_URL,
+                                  DEFAULT_PAPER_REST_API_URL)
 from lemon_markets.exceptions import LemonTokenException
 
 
@@ -44,6 +46,7 @@ class Account:
 
     def __init__(self, client_id: str, client_secret: str,
                  trading_type: str = 'paper'):
+        # sourcery skip: remove-unreachable-code
         """
         Initialize with client_id and client_secret.
 
@@ -131,7 +134,7 @@ class Account:
         Returns
         -------
         dict
-            The authorization dict (currently only of type `bearer)`: {"Authorization": "Bearer " + self.access_token}
+            The authorization dict (currently only of type `bearer`): {"Authorization": "Bearer " + self.access_token}
 
         """
         if self._access_token_type == "bearer":

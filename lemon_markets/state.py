@@ -1,11 +1,11 @@
 """Module for showing the state of you account."""
 
-from typing import List
 from datetime import datetime
+from typing import List
 
+from lemon_markets.account import Account
 from lemon_markets.helpers.api_client import _ApiClient
 from lemon_markets.helpers.time_helper import current_time
-from lemon_markets.account import Account
 from lemon_markets.space import Space
 
 

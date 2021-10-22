@@ -3,9 +3,10 @@
 from dataclasses import dataclass
 from datetime import timedelta
 
-from lemon_markets.helpers.api_client import _ApiClient
 from lemon_markets.account import Account
-from lemon_markets.helpers.time_helper import current_time, timestamp_seconds_to_datetime
+from lemon_markets.helpers.api_client import _ApiClient
+from lemon_markets.helpers.time_helper import (current_time,
+                                               timestamp_seconds_to_datetime)
 
 
 class TradingVenues(_ApiClient):

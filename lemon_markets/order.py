@@ -1,15 +1,16 @@
 """Module for placing, listing and deleting orders."""
 
-from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Union, Tuple
+from enum import Enum
+from typing import Tuple, Union
 
-from lemon_markets.helpers.api_client import _ApiClient
 from lemon_markets.account import Account
+from lemon_markets.helpers.api_client import _ApiClient
+from lemon_markets.helpers.time_helper import (datetime_to_timestamp_seconds,
+                                               timestamp_seconds_to_datetime)
 from lemon_markets.instrument import Instrument, Instruments, InstrumentType
 from lemon_markets.space import Space
-from lemon_markets.helpers.time_helper import timestamp_seconds_to_datetime, datetime_to_timestamp_seconds
 
 
 class OrderStatus(Enum):

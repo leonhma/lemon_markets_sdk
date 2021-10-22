@@ -1,11 +1,12 @@
 # undocumented on rtd
 
 import json
-import requests
 from typing import List
 
+import requests
 from lemon_markets.account import Account
-from lemon_markets.exceptions import LemonConnectionException, LemonAPIException
+from lemon_markets.exceptions import (LemonAPIException,
+                                      LemonConnectionException)
 
 
 class _ApiClient:
