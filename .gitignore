@@ -3,9 +3,13 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm,windows
 
 
-### Unittesting ###
+### testing ###
+test.ipynb
+
+### unittesting ###
 results.xml.html
 *.xml
+
 
 ### vscode ###
 .vscode

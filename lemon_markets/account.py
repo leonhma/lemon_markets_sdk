@@ -28,7 +28,7 @@ class Account:
     ------
     Exception
         Raised because real-money trading is not available yet.
-    LemonConnectionException
+    LemonTokenException
         Raised if the server responded with an unknown
         authentication type.
 
@@ -63,6 +63,8 @@ class Account:
         ------
         Exception
             Raised because real-money trading is not available yet
+        LemonTokenException
+            Raised if the server responds with an invalid token type
 
         """
         self._client_ID = client_id
@@ -90,7 +92,7 @@ class Account:
         self._access_token = data.get("access_token")
         self._access_token_type = data.get("token_type")
         if self._access_token_type not in ["bearer"]:
-            raise LemonTokenException("The access token is not from type bearer.")
+            raise LemonTokenException("The access token is not of type bearer.")
         self._access_token_expires = int(
             time.time()) + data.get("expires_in") - 60
 

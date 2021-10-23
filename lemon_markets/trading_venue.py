@@ -1,12 +1,12 @@
 """Module for listing trading venues and their opening/closing times."""
 
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, time, timedelta
+
+from pytz import timezone
 
 from lemon_markets.account import Account
 from lemon_markets.helpers.api_client import _ApiClient
-from lemon_markets.helpers.time_helper import (current_time,
-                                               timestamp_seconds_to_datetime)
 
 
 class TradingVenues(_ApiClient):
@@ -35,33 +35,68 @@ class TradingVenues(_ApiClient):
     def get_venues(self):
         """Load the list of trading venues."""
         data = self._request(endpoint='venues/')
-        data_rows = data.get("results")
+        data_rows = data.get('results')
         self.trading_venues = [TradingVenue._from_response(
             self._account, data) for data in data_rows]
 
 
 @dataclass()
-class TradingVenue(_ApiClient):  # TODO update openig checks for new AIP Strcture
-    """A trading venue."""
+class TradingVenue(_ApiClient):
+    """
+    A trading venue.
+
+    Attributes
+    ----------
+    name : str
+        The name of the venue.
+    title : str
+        The title of the venue.
+    mic : str
+        The mic identifier of the venue.
+    opening_days : list[str]
+        The days in the next month the venue has opened.
+        Dates in the format `yyyy-mm-dd`.
+    opening_time : datetime.time
+        The timezone- and DST-adjusted time the venue opens.
+    closing_time : datetime.time
+        The timezone- and DST-adjusted time the venue closes.
+    currency : str
+        Only available if this venue is the property of an instrument,
+        `None` otherwise. The currency the instrument is traded in with this venue.
+    tradable : bool
+        Only available if this venue is the property of an instrument,
+        `None` otherwise. Whether the instrument is tradable.
+
+    """
 
     name: str = None
     title: str = None
     mic: str = None
-    currency: str = None
     opening_days: list = None
-    opening_time = None
-    closing_time = None
+    opening_time: time = None
+    closing_time: time = None
+    currency: str = None
+    tradable: bool = None
     _account: Account = None
 
     @classmethod
-    def _from_response(cls, account, data: dict):
+    def _from_response(cls, account, data: dict, currency: str = None, tradable: bool = None):
+        tz = timezone(data['opening_hours']['timezone'])
+        nowstring = datetime.now().astimezone().strftime('%Y-%m-%d')
         return cls(
             _account=account,
-            name=data.get('name'),
-            title=data.get('title'),
-            mic=data.get('mic'),
-            currency=data.get("currency"),
-            opening_days=data.get('opening_days')
+            name=data['name'],
+            title=data['title'],
+            mic=data['mic'],
+            opening_days=data['opening_days'],
+            opening_time=tz.localize(
+                datetime.strptime(data['opening_hours']['start']+':'+nowstring, r'%H:%M:%Y-%m-%d')
+            ).astimezone().time(),
+            closing_time=tz.localize(
+                datetime.strptime(data['opening_hours']['end']+':'+nowstring, r'%H:%M:%Y-%m-%d')
+            ).astimezone().time(),
+            currency=currency,
+            tradable=tradable
         )
 
     def __post_init__(self):            # noqa
@@ -78,86 +113,47 @@ class TradingVenue(_ApiClient):  # TODO update openig checks for new AIP Strctur
             True if the venue is open, False otherwise
 
         """
-        day = current_time().strftime("%Y-%m-%d")
-        if self.opening_days is None:
-            self.update_opening_days()
-
-        for data in self.opening_days:
-            if day == data.get('day_iso'):
-                return (
-                    timestamp_seconds_to_datetime(data.get("opening_time"))
-                    <= current_time()
-                    <= timestamp_seconds_to_datetime(data.get("closing_time"))
-                )
-
-        self.update_opening_days()
-        for data in self.opening_days:
-            if day == data.get('day_iso'):
-                return (
-                    timestamp_seconds_to_datetime(data.get("opening_time"))
-                    <= current_time()
-                    <= timestamp_seconds_to_datetime(data.get("closing_time"))
-                )
-
-        return False
+        # gotta do it the weird way, because timezones
+        return self.time_until_close < self.time_until_open
 
     @property
     def time_until_close(self) -> timedelta:
         """
-        Get time until close of the venue.
+        Get time until the next 'close-event' of the venue.
 
         Returns
         -------
         timedelta
-            Returns the time until close. Uninitialized if not available
+            Returns the time until close.
 
         """
-        day = current_time().strftime("%Y-%m-%d")
-        if self.opening_days is None:
-            self.update_opening_days()
-
-        for data in self.opening_days:
-            if day == data.get('day_iso'):
-                return timestamp_seconds_to_datetime(
-                    data.get("closing_time")) - current_time()
-
-        self.update_opening_days()
-        for data in self.opening_days:
-            if day == data.get('day_iso'):
-                return timestamp_seconds_to_datetime(
-                    data.get("closing_time")) - current_time()
-
-        return timedelta()
+        data = self._request(f'venues?mic={self.mic}')['results'][0]
+        tz = timezone(data['opening_hours']['timezone'])
+        for date in data['opening_days']:
+            local_close = tz.localize(datetime.strptime(
+                data['opening_hours']['end']+':'+date, r'%H:%M:%Y-%m-%d')).astimezone()
+            local_now = datetime.now().astimezone()
+            if local_now > local_close:
+                continue
+            return local_close - local_now
 
     @property
     def time_until_open(self) -> timedelta:
         """
-        Get time until the market opens.
+        Get time until the next 'open-event' of the venue.
 
         Returns
         -------
         timedelta
-            Returns the time until open. Uninitialized if not available
+            Returns the time until open.
 
         """
-        day = current_time().strftime("%Y-%m-%d")
-        if self.opening_days is None:
-            self.update_opening_days()
-
-        for data in self.opening_days:
-            if day == data.get('day_iso'):
-                return timestamp_seconds_to_datetime(
-                    data.get("opening_time")) - current_time()
-
-        self.update_opening_days()
-        for data in self.opening_days:
-            if day == data.get('day_iso'):
-                return timestamp_seconds_to_datetime(
-                    data.get("opening_time")) - current_time()
-
-        return timedelta()
-
-    def update_opening_days(self):
-        """Update the opening_days property of the TradingVenue instances."""
-        self.opening_days = self._request(
-            endpoint=f"venues/{self.mic}/opening-days").get("results")
+        data = self._request(f'venues?mic={self.mic}')['results'][0]
+        tz = timezone(data['opening_hours']['timezone'])
+        for date in data['opening_days']:
+            local_open = tz.localize(datetime.strptime(
+                data['opening_hours']['start']+':'+date, r'%H:%M:%Y-%m-%d')).astimezone()
+            local_now = datetime.now().astimezone()
+            if local_now > local_open:
+                continue
+            return local_open - local_now

@@ -1,13 +1,14 @@
 import unittest
 
 from .ctest_account import _TestAccount
-from .ctest_instrument import _TestInstrument
+from .ctest_instrument import _TestInstrument, _TestInstruments
 
 
 def _suite():
     suite = unittest.TestSuite()
-    suite.addTest(_TestInstrument())
     suite.addTest(_TestAccount())
+    suite.addTest(_TestInstruments())
+    suite.addTest(_TestInstrument())
     return suite
 
 

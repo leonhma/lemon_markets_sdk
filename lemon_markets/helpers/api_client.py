@@ -10,7 +10,6 @@ from lemon_markets.exceptions import (LemonAPIException,
 
 
 class _ApiClient:
-
     def __init__(
             self, account: Account, endpoint: str = None, is_data: bool = False):
         self._account = account
@@ -34,14 +33,12 @@ class _ApiClient:
 
                 results += data['results']
 
-                if data['next'] is None or data['next'] == next:
+                if data['next'] in [None, next]:
                     break
                 else:
                     next = data['next']
         except requests.Timeout:
-            raise LemonConnectionException(
-                "Network Timeout on url: %s" % endpoint)
-
+            raise LemonConnectionException(f'Network Timeout on url: {endpoint}')
         return results
 
     def _request(
@@ -67,14 +64,12 @@ class _ApiClient:
                 response = requests.delete(
                     url=url, params=params, headers=headers)
             else:
-                raise ValueError('Unknown method: %r' % method)
+                raise ValueError(f'Unknown method: {method}')
 
         except requests.Timeout:
-            raise LemonConnectionException("Network Timeout on url: %s" % url)
+            raise LemonConnectionException(f'Network Timeout on url: {url}')
 
-        response.raise_for_status()
-
-        if response.status_code > 399:      # will this ever be triggered? raise_for_status takes care of this case, or not?
+        if response.status_code > 399:
             raise LemonAPIException(
                 status=response.status_code, errormessage=response.reason)
 

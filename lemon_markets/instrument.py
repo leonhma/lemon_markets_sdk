@@ -69,8 +69,6 @@ class Instrument:
     title: str = None
     type: str = None
     symbol: str = None
-    currency: str = None
-    tradable: str = None
     trading_venues: List[TradingVenue] = None
 
     @classmethod
@@ -78,9 +76,12 @@ class Instrument:
         try:
             type_ = InstrumentType(data.get('type'))
         except (ValueError, KeyError):
-            raise ValueError('Unexpected instrument type: %r' %
-                             data.get('type'))
-
+            raise ValueError(f'Unexpected instrument type: {data.get("type")}')
+        venues = []
+        api_client = _ApiClient(account, is_data=True)
+        for res in data['venues']:
+            vdata = api_client._request(f'venues?mic={res["mic"]}')['results'][0]
+            venues.append(TradingVenue._from_response(account, vdata, res['currency'], res['tradable']))
         return cls(
             isin=data.get('isin'),
             wkn=data.get('wkn'),
@@ -88,9 +89,7 @@ class Instrument:
             title=data.get('title'),
             type=type_,
             symbol=data.get('symbol'),
-            currency=data.get('currency'),
-            tradable=data.get('tradable'),
-            trading_venues=[TradingVenue._from_response(account, res) for res in data.get('venues')]
+            trading_venues=venues
         )
 
 
@@ -111,6 +110,11 @@ class Instruments(_ApiClient):
     def list_instruments(self, *args, **kwargs) -> List[Instrument]:
         """
         List all instruments with matching criteria.
+
+        Note
+        ----
+        Don't call this method with no parameters given. It will fetch all
+        available stocks, bonds, calls, etc. and take a very long time to return.
 
         Parameters
         ----------
