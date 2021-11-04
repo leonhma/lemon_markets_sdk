@@ -5,11 +5,10 @@ import time
 
 import requests
 
-from lemon_markets.config import (DEFAULT_AUTH_API_URL,
+from lemon_markets.config import (DEFAULT_AUTH_API_URL,                 # noqa
                                   DEFAULT_MONEY_DATA_REST_API_URL,
                                   DEFAULT_MONEY_REST_API_URL,
-                                  DEFAULT_PAPER_DATA_REST_API_URL,
-                                  DEFAULT_PAPER_REST_API_URL)
+                                  DEFAULT_PAPER_DATA_REST_API_URL)
 from lemon_markets.exceptions import LemonTokenException
 
 
@@ -41,7 +40,6 @@ class Account:
     _access_token_type: str
     _access_token_expires: int
 
-    _DEFAULT_API_URL: str
     _DATA_API_URL: str
 
     def __init__(self, client_id: str, client_secret: str,
@@ -71,11 +69,9 @@ class Account:
         self._client_secret = client_secret
 
         if trading_type.lower() == 'paper':
-            self._DEFAULT_API_URL = DEFAULT_PAPER_REST_API_URL
             self._DATA_API_URL = DEFAULT_PAPER_DATA_REST_API_URL
         elif trading_type.lower() == 'money':
-            raise Exception("Real money trading is not available yet!")
-            self.DEFAULT_API_URL = DEFAULT_MONEY_REST_API_URL
+            raise Exception('Real money trading is not available yet!')
             self._DATA_API_URL = DEFAULT_MONEY_DATA_REST_API_URL
 
         self._request_access_token()
@@ -89,12 +85,12 @@ class Account:
 
         data = json.loads(response.content)
 
-        self._access_token = data.get("access_token")
-        self._access_token_type = data.get("token_type")
-        if self._access_token_type not in ["bearer"]:
-            raise LemonTokenException("The access token is not of type bearer.")
+        self._access_token = data['access_token']
+        self._access_token_type = data['token_type']
+        if self._access_token_type not in ['bearer']:
+            raise LemonTokenException('The access token is not of type bearer.')
         self._access_token_expires = int(
-            time.time()) + data.get("expires_in") - 60
+            time.time()) + data['expires_in'] - 60
 
     @property
     def access_token(self) -> str:
@@ -139,9 +135,9 @@ class Account:
             The authorization dict (currently only of type `bearer`): {"Authorization": "Bearer " + self.access_token}
 
         """
-        if self._access_token_type == "bearer":
-            token_string = "Bearer " + self.access_token
+        if self._access_token_type == 'bearer':
+            token_string = 'Bearer ' + self.access_token
         else:
-            raise LemonTokenException("The access token is not from type bearer.")
+            raise LemonTokenException('The access token is not from type bearer.')
 
-        return {"Authorization": token_string}
+        return {'Authorization': token_string}

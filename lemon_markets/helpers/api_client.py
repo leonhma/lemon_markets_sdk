@@ -5,16 +5,14 @@ from typing import List
 
 import requests
 from lemon_markets.account import Account
-from lemon_markets.exceptions import (LemonAPIException,
-                                      LemonConnectionException)
+from lemon_markets.exceptions import LemonConnectionException
 
 
 class _ApiClient:
     def __init__(
-            self, account: Account, endpoint: str = None, is_data: bool = False):
+            self, account: Account, endpoint: str = None):
         self._account = account
-        ep = self._account._DATA_API_URL if is_data else self._account._DEFAULT_API_URL
-        self._endpoint = endpoint or ep
+        self._endpoint = endpoint or self._account._DATA_API_URL
 
     def _request_paged(self, endpoint, data_=None, params=None) -> List[dict]:
 
@@ -69,9 +67,7 @@ class _ApiClient:
         except requests.Timeout:
             raise LemonConnectionException(f'Network Timeout on url: {url}')
 
-        if response.status_code > 399:
-            raise LemonAPIException(
-                status=response.status_code, errormessage=response.reason)
+        response.raise_for_status()
 
         if method != 'delete':
             data = json.loads(response.content)

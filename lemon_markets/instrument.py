@@ -74,21 +74,21 @@ class Instrument:
     @classmethod
     def _from_response(cls, account: Account, data: dict):
         try:
-            type_ = InstrumentType(data.get('type'))
+            type_ = InstrumentType(data['type'])
         except (ValueError, KeyError):
-            raise ValueError(f'Unexpected instrument type: {data.get("type")}')
+            raise ValueError(f'Unexpected instrument type: {data["type"]}')
         venues = []
-        api_client = _ApiClient(account, is_data=True)
+        api_client = _ApiClient(account)
         for res in data['venues']:
             vdata = api_client._request(f'venues?mic={res["mic"]}')['results'][0]
             venues.append(TradingVenue._from_response(account, vdata, res['currency'], res['tradable']))
         return cls(
-            isin=data.get('isin'),
-            wkn=data.get('wkn'),
-            name=data.get('name'),
-            title=data.get('title'),
+            isin=data['isin'],
+            wkn=data['wkn'],
+            name=data['name'],
+            title=data['title'],
             type=type_,
-            symbol=data.get('symbol'),
+            symbol=data['symbol'],
             trading_venues=venues
         )
 
@@ -105,7 +105,7 @@ class Instruments(_ApiClient):
     """
 
     def __init__(self, account: Account):       # noqa
-        super().__init__(account=account, is_data=True)
+        super().__init__(account=account)
 
     def list_instruments(self, *args, **kwargs) -> List[Instrument]:
         """

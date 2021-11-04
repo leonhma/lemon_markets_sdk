@@ -36,7 +36,7 @@ jobs:
           CLIENT_ID: ${{ secrets.TEST_CLIENT_ID }}
           CLIENT_TOKEN: ${{ secrets.TEST_CLIENT_TOKEN }}
         run: |
-          python -m xmlrunner --output-file results.xml
+          python -m xmlrunner -v --output-file results.xml
       - name: Upload unittest results
         uses: actions/upload-artifact@v2
         with:

@@ -11,9 +11,9 @@ client_token = environ.get('CLIENT_TOKEN')
 class _TestInstruments(TestCase):
     def setUp(self):
         try:
-            self.account = Account(client_id, client_token)
+            account = Account(client_id, client_token)
             try:
-                self.instruments = Instruments(self.account)
+                self.instruments = Instruments(account)
             except Exception as e:
                 self._instruments_exception = e
         except Exception as e:
@@ -27,7 +27,7 @@ class _TestInstruments(TestCase):
         if not hasattr(self, 'instruments'):
             self.fail(self._instruments_exception)
 
-    def test_list_return_type(self):
+    def test_return_list_type(self):
         self.skip_if_instrs_failed()
         self.assertIs(type(self.instruments.list_instruments(search='tesla')), list)
 
@@ -39,10 +39,10 @@ class _TestInstruments(TestCase):
 class _TestInstrument(TestCase):
     def setUp(self):
         try:
-            self.account = Account(client_id, client_token)
-            self.instruments = Instruments(self.account)
+            account = Account(client_id, client_token)
+            instruments = Instruments(account)
             try:
-                self.instrument = self.instruments.list_instruments(search='tesla')[0]
+                self.instrument = instruments.list_instruments(search='tesla')[0]
             except Exception as e:
                 self._instrument_exception = e
         except Exception as e:

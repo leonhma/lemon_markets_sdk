@@ -103,21 +103,20 @@ class Order:
     def _from_response(cls, instrument: Instrument, data: dict):
 
         try:
-            status_ = OrderStatus(data.get('status'))
+            status_ = OrderStatus(data['status'])
         except (ValueError, KeyError):
-            raise ValueError('Unexpected instrument type: %r' %
-                             data.get('type'))
+            raise ValueError(f'Unexpected instrument type: {data["type"]}')
 
         return cls(
             instrument=instrument,
-            quantity=data.get('quantity'),
-            valid_until=timestamp_seconds_to_datetime(data.get('valid_until')),
-            side=data.get('side'),
-            stop_price=data.get('stop_price'),
-            limit_price=data.get('limit_price'),
-            uuid=data.get('uuid'),
+            quantity=data['quantity'],
+            valid_until=timestamp_seconds_to_datetime(data['valid_until']),
+            side=data['side'],
+            stop_price=data['stop_price'],
+            limit_price=data['limit_price'],
+            uuid=data['uuid'],
             status=status_,
-            trading_venue=data.get('trading_venue')
+            trading_venue=data['trading_venue']
         )
 
     def update_data(self, data: dict):
@@ -136,16 +135,15 @@ class Order:
 
         """
         try:
-            status_ = OrderStatus(data.get('status'))
+            status_ = OrderStatus(data['status'])
         except (ValueError, KeyError):
-            raise ValueError('Unexpected instrument type: %r' %
-                             data.get('type'))
+            raise ValueError(f'Unexpected instrument type: {data["type"]}')
         self.status = status_
-        self.average_price = data.get('average_price')
-        self.created_at = data.get('created_at')
-        self.type = InstrumentType(data.get('type'))
-        self.processed_at = data.get('processed_at')
-        self.processed_quantity = data.get('processed_quantity')
+        self.average_price = data['average_price']
+        self.created_at = data['created_at']
+        self.type = InstrumentType(data['type'])
+        self.processed_at = data['processed_at']
+        self.processed_quantity = data['processed_quantity']
 
 
 class Orders(_ApiClient):
@@ -207,17 +205,17 @@ class Orders(_ApiClient):
             The order created
 
         """
-        endpoint = f"spaces/{self._space.uuid}/orders/"
+        endpoint = f'spaces/{self._space.uuid}/orders/'
         data = {
-            "isin": instrument.isin,
-            "valid_until": datetime_to_timestamp_seconds(valid_until),
-            "side": side, "quantity": quantity}
+            'isin': instrument.isin,
+            'valid_until': datetime_to_timestamp_seconds(valid_until),
+            'side': side, 'quantity': quantity}
         if stop_price is not None:
             data['stop_price'] = stop_price
         if limit_price is not None:
             data['limit_price'] = limit_price
 
-        data = self._request(endpoint=endpoint, method="POST", data=data)
+        data = self._request(endpoint=endpoint, method='POST', data=data)
         order = Order._from_response(instrument, data)
         status = order.status
         self.orders[status.name].update({order.uuid: order})
@@ -241,7 +239,7 @@ class Orders(_ApiClient):
                 The new OrderStatus
 
         """
-        old_status = self._update_oder_data(order, '/', "GET")
+        old_status = self._update_oder_data(order, '/', 'GET')
         new_status = OrderStatus(order.status.name)
         self.orders[new_status].update({order.uuid: order})
         status_changed = (old_status != new_status)
@@ -262,7 +260,7 @@ class Orders(_ApiClient):
             `True` if the order was successfully activated
 
         """
-        self._update_oder_data(order, '/activate/', "PUT")
+        self._update_oder_data(order, '/activate/', 'PUT')
         new_status = order.status.name
         self.orders[new_status].update({order.uuid: order})
         return new_status == 'ACTIVATED'
@@ -291,8 +289,8 @@ class Orders(_ApiClient):
             and the OrderStatus is the new status of the order
 
         """
-        endpoint = f"spaces/{self._space.uuid}/orders/{order.uuid}/"
-        self._request(endpoint=endpoint, method="DELETE")
+        endpoint = f'spaces/{self._space.uuid}/orders/{order.uuid}/'
+        self._request(endpoint=endpoint, method='DELETE')
         status_changed, new_status = self.update_order(order)
         return status_changed, new_status
 
@@ -320,7 +318,7 @@ class Orders(_ApiClient):
             Filter by status.
 
         """
-        endpoint = f"spaces/{self._space.uuid}/orders/"
+        endpoint = f'spaces/{self._space.uuid}/orders/'
         params = {}
         if created_at_until is not None:
             params['created_at_until'] = datetime_to_timestamp_seconds(
@@ -345,7 +343,7 @@ class Orders(_ApiClient):
         expired_uuids = list(self.orders['EXPIRED'])
 
         for o in results:
-            uuid = o.get('uuid')
+            uuid = o['uuid']
             if uuid in inactive_uuids:
                 self.orders['INACTIVE'].pop(uuid)
             if uuid in active_uuids:
@@ -359,7 +357,7 @@ class Orders(_ApiClient):
             if uuid in expired_uuids:
                 self.orders['EXPIRED'].pop(uuid)
 
-            isin = o["instrument"].get("isin")
+            isin = o['instrument']['isin']
             instrument = Instruments(
                 self._account).list_instruments(
                 search=isin)[0]

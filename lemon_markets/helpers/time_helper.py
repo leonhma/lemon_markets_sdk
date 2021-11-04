@@ -2,6 +2,9 @@
 from datetime import datetime
 from typing import Union
 
+from dateutil.parser import parse
+from pytz import timezone
+
 
 def timestamp_seconds_to_datetime(ts: Union[int, float]) -> datetime:
     """
@@ -93,3 +96,26 @@ def time(year: int = datetime.now().year,
                     hour=hour,
                     minute=minute,
                     second=second).astimezone()
+
+
+def parse_datetime(datestring: str, tzfallback: str = 'UTC') -> datetime:
+    """
+    Parse the timezone-aware datetime from a string.
+
+    Parameters
+    ----------
+    datestring : str
+        The string to parse.
+    tzfallback : str, optional
+        The timezone to use if none is present in the datestring, by default `UTC`.
+
+    Returns
+    -------
+    datetime
+        The timezone-aware datetime parsed from the string.
+
+    """
+    time = parse(datestring)
+    if not time.tzinfo:
+        time = timezone(tzfallback).localize(time)
+    return time.astimezone()

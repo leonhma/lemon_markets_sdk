@@ -65,7 +65,7 @@ class State(_ApiClient):
         if diff_since_last_update.total_seconds() > self._cash_storage_time:
             data = self._request(endpoint='state/')
             try:
-                self._balance = float(data.get('state').get('balance'))
+                self._balance = float(data['state']['balance'])
                 self._state = data
             except Exception:
                 raise Exception

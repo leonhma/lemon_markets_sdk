@@ -21,9 +21,9 @@ class Position:
     def _from_response(cls, instrument: Instrument, data: dict):
         return cls(
             instrument=instrument,
-            quantity=data.get('quantity'),
-            average_price=float(data.get('average_price')),
-            latest_total_value=float(data.get('latest_total_value'))
+            quantity=data['quantity'],
+            average_price=float(data['average_price']),
+            latest_total_value=float(data['latest_total_value'])
         )
 
 
@@ -54,12 +54,12 @@ class Portfolio(_ApiClient):
 
     def update_positions(self):
         """Update non-static portfolio data."""
-        endpoint = f"spaces/{self._space.uuid}/portfolio/"
+        endpoint = f'spaces/{self._space.uuid}/portfolio/'
         data_rows = self._request_paged(endpoint=endpoint)
 
         self.positions = []
         for data in data_rows:
-            isin = data["instrument"].get("isin")
+            isin = data['instrument']['isin']
             instrument = Instruments(
                 self._account).list_instruments(search=isin)[0]
             self.positions.append(Position._from_response(instrument=instrument, data=data))

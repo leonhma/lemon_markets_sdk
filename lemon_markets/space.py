@@ -66,14 +66,14 @@ class Space(_ApiClient):
     @classmethod
     def _from_response(cls, account: Account, data: dict):
         try:
-            type_ = SpaceType(data.get('type'))
+            type_ = SpaceType(data['type'])
         except (ValueError, KeyError):
-            raise ValueError('Unexpected space type: %r' % data.get('type'))
+            raise ValueError(f'Unexpected space type: {data["type"]}')
 
         return cls(
-            uuid=data.get('uuid'),
-            name=data.get('name'),
-            _state=data.get('state'),
+            uuid=data['uuid'],
+            name=data['name'],
+            _state=data['state'],
             type=type_,
             _account=account,
             _latest_update=current_time()
@@ -95,13 +95,13 @@ class Space(_ApiClient):
 
         """
         try:
-            type_ = SpaceType(data.get('type'))
+            type_ = SpaceType(data['type'])
         except (ValueError, KeyError):
-            raise ValueError('Unexpected space type: %r' % data.get('type'))
+            raise ValueError(f'Unexpected space type: {data["type"]}')
 
-        self.uuid = data.get('uuid')
-        self.name = data.get('name')
-        self._state = data.get('state')
+        self.uuid = data['uuid']
+        self.name = data['name']
+        self._state = data['state']
         self.type = type_
 
     def __post_init__(self):            # noqa
@@ -111,7 +111,7 @@ class Space(_ApiClient):
         diff_since_last_update = self._latest_update - current_time()
 
         if diff_since_last_update.total_seconds() > self._cash_storage_time:
-            data = self._request(f"spaces/{self.uuid}/")
+            data = self._request(f'spaces/{self.uuid} /')
             self.update_values(data)
 
     # TODO revise docstring
@@ -157,7 +157,7 @@ class Space(_ApiClient):
 
         """
         self._update_space_state()
-        return float(self._state.get("balance"))
+        return float(self._state['balance'])
 
     @property
     def cash_to_invest(self) -> float:
@@ -173,4 +173,4 @@ class Space(_ApiClient):
 
         """
         self._update_space_state()
-        return float(self._state.get("cash_to_invest"))
+        return float(self._state['cash_to_invest'])

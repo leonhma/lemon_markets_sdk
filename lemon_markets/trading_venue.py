@@ -3,10 +3,9 @@
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 
-from pytz import timezone
-
 from lemon_markets.account import Account
 from lemon_markets.helpers.api_client import _ApiClient
+from lemon_markets.helpers.time_helper import parse_datetime
 
 
 class TradingVenues(_ApiClient):
@@ -30,12 +29,13 @@ class TradingVenues(_ApiClient):
 
     def __init__(self, account: Account):       # noqa
         _account = account
-        super().__init__(account=_account, is_data=True)
+        super().__init__(account=_account)
+        self.get_venues()
 
     def get_venues(self):
         """Load the list of trading venues."""
         data = self._request(endpoint='venues/')
-        data_rows = data.get('results')
+        data_rows = data['results']
         self.trading_venues = [TradingVenue._from_response(
             self._account, data) for data in data_rows]
 
@@ -81,26 +81,26 @@ class TradingVenue(_ApiClient):
 
     @classmethod
     def _from_response(cls, account, data: dict, currency: str = None, tradable: bool = None):
-        tz = timezone(data['opening_hours']['timezone'])
-        nowstring = datetime.now().astimezone().strftime('%Y-%m-%d')
         return cls(
             _account=account,
             name=data['name'],
             title=data['title'],
             mic=data['mic'],
             opening_days=data['opening_days'],
-            opening_time=tz.localize(
-                datetime.strptime(data['opening_hours']['start']+':'+nowstring, r'%H:%M:%Y-%m-%d')
-            ).astimezone().time(),
-            closing_time=tz.localize(
-                datetime.strptime(data['opening_hours']['end']+':'+nowstring, r'%H:%M:%Y-%m-%d')
-            ).astimezone().time(),
+            opening_time=parse_datetime(
+                '2000-01-01T'+data['opening_hours']['start'],
+                data['opening_hours']['timezone']
+            ).time(),
+            closing_time=parse_datetime(
+                '2000-01-01T'+data['opening_hours']['end'],
+                data['opening_hours']['timezone']
+            ).time(),
             currency=currency,
             tradable=tradable
         )
 
     def __post_init__(self):            # noqa
-        super().__init__(self._account, is_data=True)
+        super().__init__(self._account)
 
     @property
     def is_open(self) -> bool:
@@ -110,11 +110,10 @@ class TradingVenue(_ApiClient):
         Returns
         -------
         bool
-            True if the venue is open, False otherwise
+            `True` if the venue is currently open, `False` otherwise.
 
         """
-        # gotta do it the weird way, because timezones
-        return self.time_until_close < self.time_until_open
+        return self._request(f'venues?mic={self.mic}')['results'][0]['is_open']
 
     @property
     def time_until_close(self) -> timedelta:
@@ -124,14 +123,15 @@ class TradingVenue(_ApiClient):
         Returns
         -------
         timedelta
-            Returns the time until close.
+            The time until close.
 
         """
         data = self._request(f'venues?mic={self.mic}')['results'][0]
-        tz = timezone(data['opening_hours']['timezone'])
         for date in data['opening_days']:
-            local_close = tz.localize(datetime.strptime(
-                data['opening_hours']['end']+':'+date, r'%H:%M:%Y-%m-%d')).astimezone()
+            local_close = parse_datetime(
+                date+'T'+data['opening_hours']['end'],
+                data['opening_hours']['timezone']
+                )
             local_now = datetime.now().astimezone()
             if local_now > local_close:
                 continue
@@ -145,14 +145,15 @@ class TradingVenue(_ApiClient):
         Returns
         -------
         timedelta
-            Returns the time until open.
+            The time until open.
 
         """
         data = self._request(f'venues?mic={self.mic}')['results'][0]
-        tz = timezone(data['opening_hours']['timezone'])
         for date in data['opening_days']:
-            local_open = tz.localize(datetime.strptime(
-                data['opening_hours']['start']+':'+date, r'%H:%M:%Y-%m-%d')).astimezone()
+            local_open = parse_datetime(
+                date+'T'+data['opening_hours']['start'],
+                data['opening_hours']['timezone']
+                )
             local_now = datetime.now().astimezone()
             if local_now > local_open:
                 continue
