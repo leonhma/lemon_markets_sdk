@@ -5,6 +5,13 @@ Reference
 lemon\_markets package
 ======================
 
+lemon\_markets.exceptions module
+--------------------------------
+
+.. automodule:: lemon_markets.exceptions
+   :members:
+   :show-inheritance:
+
 lemon\_markets.account module
 -----------------------------
 
@@ -12,10 +19,31 @@ lemon\_markets.account module
    :members:
    :show-inheritance:
 
-lemon\_markets.exceptions module
---------------------------------
+lemon\_markets.space module
+---------------------------
 
-.. automodule:: lemon_markets.exceptions
+.. automodule:: lemon_markets.space
+   :members:
+   :show-inheritance:
+
+lemon\_markets.state module
+---------------------------
+
+.. automodule:: lemon_markets.state
+   :members:
+   :show-inheritance:
+
+lemon\_markets.portfolio module
+-------------------------------
+
+.. automodule:: lemon_markets.portfolio
+   :members:
+   :show-inheritance:
+
+lemon\_markets.trading\_venue module
+------------------------------------
+
+.. automodule:: lemon_markets.trading_venue
    :members:
    :show-inheritance:
 
@@ -37,34 +65,6 @@ lemon\_markets.order module
 ---------------------------
 
 .. automodule:: lemon_markets.order
-   :members:
-   :show-inheritance:
-
-lemon\_markets.portfolio module
--------------------------------
-
-.. automodule:: lemon_markets.portfolio
-   :members:
-   :show-inheritance:
-
-lemon\_markets.space module
----------------------------
-
-.. automodule:: lemon_markets.space
-   :members:
-   :show-inheritance:
-
-lemon\_markets.state module
----------------------------
-
-.. automodule:: lemon_markets.state
-   :members:
-   :show-inheritance:
-
-lemon\_markets.trading\_venue module
-------------------------------------
-
-.. automodule:: lemon_markets.trading_venue
    :members:
    :show-inheritance:
 

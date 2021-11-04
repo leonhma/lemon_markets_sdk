@@ -40,8 +40,9 @@ jobs:
       - name: Upload unittest results
         uses: actions/upload-artifact@v2
         with:
-          name: Unittest Results (Python ${{ matrix.python-version }})
+          name: Unittest Results (Python ${{ matrix.version }})
           path: results.xml
+          retention-days: 1
   publish-test-results:
     name: "Publish Unittest results"
     needs: test
