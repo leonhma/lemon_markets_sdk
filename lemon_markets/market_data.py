@@ -23,7 +23,7 @@ class OHLC(_ApiClient):
 
     """
 
-    def __init__(self, account: Account):       # noqa
+    def __init__(self, account: Account):
         super().__init__(account=account)
 
     def get_data(

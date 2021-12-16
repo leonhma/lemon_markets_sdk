@@ -3,27 +3,27 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from typing import List
 
 from lemon_markets.account import Account
 from lemon_markets.helpers.api_client import _ApiClient
-from lemon_markets.helpers.time_helper import current_time
+from lemon_markets.helpers.time_helper import parse_datetime, timestamp
 
 
 class SpaceType(Enum):
     """
-    Type of the space.
+    Class for different space types.
 
     Attributes
     ----------
-    STRATEGY
-        Type is `strategy`
-    APP
-        Type is `app`
+    AUTO
+        Automatic order execution
+    MANUAL
+        Manual order execution
 
     """
-
-    STRATEGY = 'strategy'
-    APP = 'app'
+    AUTO = 'auto'
+    MANUAL = 'manual'
 
 
 @dataclass
@@ -33,144 +33,211 @@ class Space(_ApiClient):
 
     Attributes
     ----------
-    uuid : str
-        The uuid of the space.
+    cache_seconds : int
+        The number of seconds after which the cache is invalidated. Defaults to 10 seconds.
+    id : str
+        The id of the space
     name : str
-        The name of the space.
+        The name of the space
+    description : str
+        The description of the space
     type : SpaceType
-        The type of the space.
-    state : dict
-        The state of the space. The data gets automatically updated if it is older than 10 seconds. (Or your manually set cash time)
-    balance : float
-        The balance of the space. The data gets automatically updated if it is older than 10 seconds. (Or your manually set cash time)
-    cash_to_invest : float
-        The cash to invest. The data gets automatically updated if it is older than 10 seconds. (Or your manually set cash time)
+        The type of the space
+    linked : str
+        The linked spaces
+    created_at : datetime
+        The date and time the space was created
+    risk_limit : float
+        The risk limit of the space
+    buying_power : float
+        The buying power of the space
+    earnings : float
+        The earnings of the space
+    backfire : float
+        The backfire of the space
+
 
     Raises
     ------
     ValueError
         If the space type is invalid
 
-    """
+    """  # TODO figure out what `linked` is
+    # static properties of the space
+    id: str
+    created_at: datetime
 
-    uuid: str = None
-    name: str = None
-    type: SpaceType = None
-    _state: dict = None
-
+    _latest_update: int = 0
+    _cache: dict = None
     _account: Account = None
+    _deleted = False
 
-    _latest_update: datetime = None
-    _cash_storage_time: int = 10
+    cache_seconds: int = 10
+
+    name = property(lambda self: self._get_space_cache()['name'])
+    description = property(lambda self: self._get_space_cache()['description'])
+    type = property(lambda self: self._get_space_cache()['type'])
+    linked = property(lambda self: self._get_space_cache()['linked'])
+
+    risk_limit = property(lambda self: self._get_space_cache()['risk_limit'])
+    buying_power = property(lambda self: self._get_space_cache()['buying_power'])
+    earnings = property(lambda self: self._get_space_cache()['earnings'])
+    backfire = property(lambda self: self._get_space_cache()['backfire'])
 
     @classmethod
     def _from_response(cls, account: Account, data: dict):
-        try:
-            type_ = SpaceType(data['type'])
-        except (ValueError, KeyError):
-            raise ValueError(f'Unexpected space type: {data["type"]}')
-
         return cls(
-            uuid=data['uuid'],
-            name=data['name'],
-            _state=data['state'],
-            type=type_,
-            _account=account,
-            _latest_update=current_time()
+            created_at=parse_datetime(data['created_at']),
+            id=data['id'],
+            _account=account
         )
 
-    def update_values(self, data: dict):
-        """
-        Update values from response data.
-
-        Parameters
-        ----------
-        data : dict
-            Response data
-
-        Raises
-        ------
-        ValueError
-            Raised if the space type in data is invalid
-
-        """
-        try:
-            type_ = SpaceType(data['type'])
-        except (ValueError, KeyError):
-            raise ValueError(f'Unexpected space type: {data["type"]}')
-
-        self.uuid = data['uuid']
-        self.name = data['name']
-        self._state = data['state']
-        self.type = type_
-
-    def __post_init__(self):            # noqa
+    def __post_init__(self):
         super().__init__(account=self._account)
 
-    def _update_space_state(self):
-        diff_since_last_update = self._latest_update - current_time()
+    def _update_space_cache(self):
+        """Update the state of the space if it is older than `cache_seconds` seconds."""
+        if self._deleted:
+            raise ValueError('Space has been deleted')
+        if timestamp() - self._latest_update > self.cache_seconds:
+            print('updaring space cache')
+            data = self._request(f'spaces/{self.id}')['results']
+            try:
+                type_ = SpaceType(data['type'])
+            except (ValueError, KeyError):
+                raise ValueError(f'Unexpected space type: {data["type"]}')
+            self._cache = {
+                'name': data['name'],
+                'description': data['description'],
+                'type': type_,
+                'linked': data['linked'],
+                'risk_limit': data['risk_limit'],
+                'buying_power': data['buying_power'],
+                'earnings': data['earnings'],
+                'backfire': data['backfire']
+            }
+            self._latest_update = timestamp()
 
-        if diff_since_last_update.total_seconds() > self._cash_storage_time:
-            data = self._request(f'spaces/{self.uuid} /')
-            self.update_values(data)
-
-    # TODO revise docstring
-    def change_cash_time(self, new_cash_time_in_seconds: int):
+    def _get_space_cache(self) -> dict:
         """
-        Change the time request results are cashed by multiple property calls.
-
-        Parameters
-        ----------
-        new_cash_time_in_seconds : int
-            The wished time data is cashed.
-
-        """
-        self._cash_storage_time = new_cash_time_in_seconds
-
-    @property
-    def state(self) -> dict:
-        """
-        Get the state of the space. The data gets automatically updated if it is older than 10 seconds.
-
-        (Or your manually set cash time)
+        Get the state of the space.
 
         Returns
         -------
         dict
-            The space state
+            The state of the space
 
         """
-        self._update_space_state()
-        return self._state
+        self._update_space_cache()
+        return self._cache
 
-    @property
-    def balance(self) -> float:
+    def delete(self):
+        if self._deleted:
+            raise ValueError('Space has been deleted')
+        """Delete the space."""
+        self._request(f'spaces/{self.id}', method='DELETE', headers=self._account._authorize())
+        del self
+
+    def _alter(self, data: dict):
+        if self._deleted:
+            raise ValueError('Space has been deleted')
+        """Alter the space."""
+        data = self._request(f'spaces/{self.id}', method='PUT', data=data, headers=self._account._authorize())
+        self._cache = self._parse(data['results'])
+        self._latest_update = timestamp()
+
+    @name.setter
+    def name(self, name: str):
+        """Set the name of the space."""
+        self._alter({'name': name})
+
+    @description.setter
+    def description(self, description: str):
+        """Set the description of the space."""
+        self._alter({'description': description})
+
+    @risk_limit.setter
+    def risk_limit(self, risk_limit: float):
+        """Set the risk limit of the space."""
+        self._alter({'risk_limit': risk_limit})
+
+    @linked.setter
+    def linked(self, linked: str):
+        """Set the linked spaces of the space."""
+        self._alter({'linked': linked})
+
+
+class Spaces(_ApiClient):
+    def __init__(self, account: Account):
+        super().__init__(account=account)
+
+    def list_spaces(self, type: SpaceType = None) -> List[Space]:
         """
-        Get space balance. The data gets automatically updated if it is older than 10 seconds.
+        List all spaces with matching criteria.
 
-        (Or your manually set cash time)
+        Parameters
+        ----------
+        type : bool, optional
+            Search for spaces of the specified type. See [the docs](https://docs.lemon.markets/spaces#automated-vs-manual-space) for more information.
 
         Returns
         -------
-        float
-            The balance
+        List[Space]
+            List of spaces matching your query
 
         """
-        self._update_space_state()
-        return float(self._state['balance'])
+        params = {}
+        if type is not None:
+            params['type'] = type.value
+        result_pages = self._request_paged('spaces', params=params)
+        return [Space._from_response(self._account, res) for res in result_pages]
 
-    @property
-    def cash_to_invest(self) -> float:
+    def get_space(self, id: str) -> Space:
         """
-        Get cash to invest. The data gets automatically updated if it is older than 10 seconds.
+        Get a space by id.
 
-        (Or your manually set cash time)
+        Parameters
+        ----------
+        id : str
+            The id of the space
 
         Returns
         -------
-        float
-            Cash to invest
+        Space
+            The space
 
         """
-        self._update_space_state()
-        return float(self._state['cash_to_invest'])
+        data = self._request(f'spaces/{id}')
+        return Space._from_response(self._account, data['results'])
+
+    def create_space(self, name: str, type: SpaceType, risk_limit: float, description: str = None) -> Space:
+        """
+        Create a space.
+
+        Parameters
+        ----------
+        name : str
+            The name of the space
+        type : SpaceType
+            The type of the space
+        risk_limit : float
+            The risk limit of the space. In 1/1000 of your currency (so for 100 EUR risk limit, you should use 100000)
+        description : str, optional
+            The description of the space
+
+        Returns
+        -------
+        Space
+            The space
+
+        """
+        data = {
+            'name': name,
+            'type': type.value,
+            'risk_limit': risk_limit
+        }
+        if description is not None:
+            data['description'] = description
+
+        data = self._request('spaces', method='POST', data=data, headers=self._account._authorize())
+        return Space._from_response(self._account, data['results'])

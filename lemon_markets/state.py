@@ -43,7 +43,7 @@ class State(_ApiClient):
     _latest_update: datetime = None
     _cash_storage_time: int = 10
 
-    def __init__(self, account: Account, cash_time_in_seconds: int = 10):       # noqa
+    def __init__(self, account: Account, cash_time_in_seconds: int = 10):
         super().__init__(account)
         self._cash_storage_time = cash_time_in_seconds
         self.get_state()

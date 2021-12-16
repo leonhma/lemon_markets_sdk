@@ -27,7 +27,7 @@ class TradingVenues(_ApiClient):
     trading_venues = None
     _account = None
 
-    def __init__(self, account: Account):       # noqa
+    def __init__(self, account: Account):
         _account = account
         super().__init__(account=_account)
         self.get_venues()
@@ -99,7 +99,7 @@ class TradingVenue(_ApiClient):
             tradable=tradable
         )
 
-    def __post_init__(self):            # noqa
+    def __post_init__(self):
         super().__init__(self._account)
 
     @property

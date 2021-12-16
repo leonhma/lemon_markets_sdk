@@ -1,19 +1,8 @@
 """Exceptions raised by the SDK."""
+# TODO handle all response codes
 
 
-class LemonException(Exception):
-    """Baseclass for exceptions raised by the SDK."""
-
-    pass
+# TODO an exception for a wrong/expired token
 
 
-class LemonConnectionException(LemonException):
-    """Raised when there is a problem with the network connection."""
-
-    pass
-
-
-class LemonTokenException(LemonException):
-    """Raised when the account token is of the wrong type."""
-
-    pass
+# TODO an exception for a status other than 'ok' in the response json? (maybe not needed as it seems redundant with the status code of the request)

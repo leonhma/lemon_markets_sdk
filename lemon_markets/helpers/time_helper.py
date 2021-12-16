@@ -1,5 +1,6 @@
 """Various helper functions for dealing with time."""
 from datetime import datetime
+from time import time
 from typing import Union
 
 from dateutil.parser import parse
@@ -44,7 +45,7 @@ def datetime_to_timestamp_seconds(dt: datetime) -> float:
 
 def timestamp_milliseconds_to_datetime(ts: Union[int, float]) -> datetime:
     """
-    Convert unix milliseconds timestamp to datetime object.
+    Convert posix milliseconds timestamp to datetime object.
 
     Parameters
     ----------
@@ -62,7 +63,7 @@ def timestamp_milliseconds_to_datetime(ts: Union[int, float]) -> datetime:
 
 def datetime_to_timestamp_milliseconds(dt: datetime) -> float:
     """
-    Convert datetime to unix milliseconds timestamp.
+    Convert datetime to posix milliseconds timestamp.
 
     Parameters
     ----------
@@ -72,13 +73,13 @@ def datetime_to_timestamp_milliseconds(dt: datetime) -> float:
     Returns
     -------
     float
-        The unix milliseconds timestamp
+        The posix milliseconds timestamp
 
     """
     return int(dt.timestamp() * 1000)
 
 
-def current_time() -> datetime:  # gets time in local timezone
+def current_time() -> datetime:
     """Return timezone-aware current time as datetime."""
     return datetime.now().astimezone()
 
@@ -88,7 +89,7 @@ def time(year: int = datetime.now().year,
          day: int = datetime.now().day,
          hour: int = datetime.now().hour,
          minute: int = datetime.now().minute,
-         second: int = datetime.now().second) -> datetime:  # gets time in local timezone
+         second: int = datetime.now().second) -> datetime:
     """Return the current datetime in local timezone."""
     return datetime(year=year,
                     month=month,
@@ -119,3 +120,8 @@ def parse_datetime(datestring: str, tzfallback: str = 'UTC') -> datetime:
     if not time.tzinfo:
         time = timezone(tzfallback).localize(time)
     return time.astimezone()
+
+
+def timestamp() -> int:
+    """Return the current timestamp in seconds. Not meant to be used as timezone-aware."""
+    return int(time().timestamp())

@@ -48,7 +48,7 @@ class Portfolio(_ApiClient):
     _space: Space
     positions: list = []
 
-    def __init__(self, account: Account, space: Space):     # noqa
+    def __init__(self, account: Account, space: Space):
         self._space = space
         super().__init__(account=account)
 

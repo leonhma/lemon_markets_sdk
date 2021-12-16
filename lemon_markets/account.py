@@ -1,15 +1,9 @@
 """The entry point of all your scripts."""
 
-import json
-import time
+from dataclasses import dataclass
+from datetime import date, datetime
+from lemon_markets.config import PAPER_TRADING_REST_URL, TRADING_REST_URL
 
-import requests
-
-from lemon_markets.config import (DEFAULT_AUTH_API_URL,                 # noqa
-                                  DEFAULT_MONEY_DATA_REST_API_URL,
-                                  DEFAULT_MONEY_REST_API_URL,
-                                  DEFAULT_PAPER_DATA_REST_API_URL)
-from lemon_markets.exceptions import LemonTokenException
 
 
 class Account:
@@ -33,16 +27,38 @@ class Account:
 
     """
 
-    _client_ID: str
-    _client_secret: str
+    _token: str
 
-    _access_token: str
-    _access_token_type: str
-    _access_token_expires: int
+    created_at: datetime = None
+    account_id: str = None
+    firstname: str = None
+    lastname: str = None
+    email: str = None
+    phone: str = None
+    address: str = None
+    billing_address: str = None
+    billing_email: str = None
+    billing_name: str = None
+    billing_vat: str = None
+    mode: str = None
+    deposit_id: str = None
+    client_id: str = None
+    account_number: str = None
+    iban_brokerage: str = None
+    iban_origin: str = None
+    bank_name_origin: str = None
+    balance: float = None
+    cash_to_invest: float = None
+    cash_to_withdraw: float = None
+    trading_plan: str = None
+    data_plan: str = None
+    tax_allowance: float = None
+    tax_allowance_start: date = None
+    tax_allowance_end: date = None
 
-    _DATA_API_URL: str
+    _TRADING_REST_URL: str
 
-    def __init__(self, client_id: str, client_secret: str,
+    def __init__(self, token: str,
                  trading_type: str = 'paper'):
         # sourcery skip: remove-unreachable-code
         """
@@ -50,10 +66,8 @@ class Account:
 
         Parameters
         ----------
-        client_id : str
-            The id of your client
-        client_secret : str
-            The secret of your client
+        token : str
+            A valid authentication key.
         trading_type : str, optional
             The type of trading to use, by default `paper`
 
@@ -61,36 +75,14 @@ class Account:
         ------
         Exception
             Raised because real-money trading is not available yet
-        LemonTokenException
-            Raised if the server responds with an invalid token type
 
         """
-        self._client_ID = client_id
-        self._client_secret = client_secret
+        self._token = token
 
         if trading_type.lower() == 'paper':
-            self._DATA_API_URL = DEFAULT_PAPER_DATA_REST_API_URL
+            self._TRADING_REST_URL = PAPER_TRADING_REST_URL
         elif trading_type.lower() == 'money':
-            raise Exception('Real money trading is not available yet!')
-            self._DATA_API_URL = DEFAULT_MONEY_DATA_REST_API_URL
-
-        self._request_access_token()
-
-    def _request_access_token(self):
-        data = {"client_id": self._client_ID,
-                "client_secret": self._client_secret,
-                "grant_type": "client_credentials"}
-        response = requests.post(url=DEFAULT_AUTH_API_URL, data=data)
-        response.raise_for_status()
-
-        data = json.loads(response.content)
-
-        self._access_token = data['access_token']
-        self._access_token_type = data['token_type']
-        if self._access_token_type not in ['bearer']:
-            raise LemonTokenException('The access token is not of type bearer.')
-        self._access_token_expires = int(
-            time.time()) + data['expires_in'] - 60
+            self._TRADING_REST_URL = TRADING_REST_URL
 
     @property
     def access_token(self) -> str:
@@ -103,41 +95,27 @@ class Account:
             The access token
 
         """
-        if time.time() > self._access_token_expires:
-            self._request_access_token()
+        # TODO check token for validity
 
-        return self._access_token
+        return self._token
 
-    @property
-    def access_token_type(self) -> str:
+    def _authorize(self, props: dict = None) -> dict:
         """
-        Type of the access token.
+        Return a dict with the authorization header and the data passed to `props`
 
-        Returns
-        -------
-        str
-            The type. Currently only `bearer`
-
-        """
-        if time.time() > self._access_token_expires:
-            self._request_access_token()
-
-        return self._access_token_type
-
-    @property
-    def _authorization(self) -> dict:
-        """
-        Temporary access token packaged in a dict like the client needs it for authorization.
+        Parameters
+        ----------
+        props : dict, optional
+            Additional properties to add to the dict, by default `None`
 
         Returns
         -------
         dict
-            The authorization dict (currently only of type `bearer`): {"Authorization": "Bearer " + self.access_token}
+            The authorization dict: {"Authorization": "Bearer " + self._access_token}
 
         """
-        if self._access_token_type == 'bearer':
-            token_string = 'Bearer ' + self.access_token
-        else:
-            raise LemonTokenException('The access token is not from type bearer.')
+        if not props:
+            props = {}
+        props['Authorization'] = f'Bearer {self.access_token}'
 
-        return {'Authorization': token_string}
+        return props

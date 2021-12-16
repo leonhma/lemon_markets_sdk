@@ -168,7 +168,7 @@ class Orders(_ApiClient):
     # Structures all orders in a dict containing a dict (the index is the uuid) of orders for each last known order status.
     orders = {}
 
-    def __init__(self, account: Account, space: Space):     # noqa
+    def __init__(self, account: Account, space: Space):
         self._space = space
         super().__init__(account=account)
         for status in OrderStatus:

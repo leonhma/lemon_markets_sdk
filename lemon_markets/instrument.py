@@ -104,7 +104,7 @@ class Instruments(_ApiClient):
 
     """
 
-    def __init__(self, account: Account):       # noqa
+    def __init__(self, account: Account):
         super().__init__(account=account)
 
     def list_instruments(self, *args, **kwargs) -> List[Instrument]:
