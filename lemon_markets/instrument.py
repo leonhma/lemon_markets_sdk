@@ -8,7 +8,6 @@ from lemon_markets.account import Account
 from lemon_markets.helpers.api_client import _ApiClient
 from lemon_markets.trading_venue import TradingVenue
 
-
 class InstrumentType(Enum):
     """
     Class for different instrument types.
